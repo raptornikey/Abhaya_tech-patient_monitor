@@ -1,6 +1,6 @@
 int av=A0;
-float val=0;
-float val1=0;
+//float val=0;
+//float val1=0;
 float Dia=0,Sys=0,pressureMax=15,pressureMin=-15,Vsupply=5,volta=0,maxvolt=0,volt=0,pressure=0,MAP=0,maxv=0;
 int i;
 void setup() {
