@@ -66,9 +66,15 @@
 #include "nrf_log_ctrl.h"
 #include "nrf_log_default_backends.h"
 #include "system_nrf52.h"
+
+#define RELAY NRF_GPIO_PIN_MAP(1,10)
+
 #define ENABLE_SWD 1
 #define SAMPLES_IN_BUFFER 1
 volatile uint8_t state = 1;
+ bool isFull = false;
+uint8_t counter = 0;
+
 
 static const nrf_drv_timer_t m_timer = NRF_DRV_TIMER_INSTANCE(0);
 static nrf_saadc_value_t     m_buffer_pool[2][SAMPLES_IN_BUFFER];
@@ -95,7 +101,7 @@ void saadc_sampling_event_init(void)
     APP_ERROR_CHECK(err_code);
 
     /* setup m_timer for compare event every 400ms */
-    uint32_t ticks = nrf_drv_timer_ms_to_ticks(&m_timer, 400);
+    uint32_t ticks = nrf_drv_timer_ms_to_ticks(&m_timer, 250);
     nrf_drv_timer_extended_compare(&m_timer,
                                    NRF_TIMER_CC_CHANNEL0,
                                    ticks,
@@ -115,6 +121,7 @@ void saadc_sampling_event_init(void)
                                           timer_compare_event_addr,
                                           saadc_sample_task_addr);
     APP_ERROR_CHECK(err_code);
+
 }
 
 
@@ -136,6 +143,8 @@ void saadc_callback(nrf_drv_saadc_evt_t const * p_event)
 {
     if (p_event->type == NRF_DRV_SAADC_EVT_DONE)
     {
+       // 
+
         ret_code_t err_code;
         //LEDS_CONFIGURE(LEDS_MASK);
         err_code = nrf_drv_saadc_buffer_convert(p_event->data.done.p_buffer, SAMPLES_IN_BUFFER);
@@ -143,34 +152,53 @@ void saadc_callback(nrf_drv_saadc_evt_t const * p_event)
 
        float Dia=0,Sys=0,pressureMax=15,pressureMin=-15,Vsupply=5,volta=0,maxvolt=0,volt=0,pressure=0,MAP=0,maxv=0;
         int i;
-        nrf_gpio_pin_set(LED_1);
-        //nrf_gpio_pin_write(NRF_GPIO_PIN_MAP(0,13),1);
-        //NRF_LOG_INFO("ADC event number: %d", (int)m_adc_evt_counter);
-        for(i=0;i<40;i++)
+       
+
+        for (i = 0; i < SAMPLES_IN_BUFFER && !isFull; i++)
         {
-        volta=p_event->data.done.p_buffer[i];
-        volt=(volta*5)/(1023.00);
+        counter ++;
+          nrf_gpio_pin_write(RELAY,1);
+           NRF_LOG_INFO("%d",(p_event->data.done.p_buffer[i]));
+            //NRF_LOG_INFO("%d", ((p_event->data.done.p_buffer[i])/204.6));
+       /* for(i=0;i<40;i++)
+        {
+        volta=(p_event->data.done.p_buffer[i]);
+      NRF_LOG_INFO("%d, Volt",volta);
+        volt=((volta*5)/(1023.00));
         maxv=max(abs(volt-2.5),maxvolt);
         maxvolt=abs(maxv-2.5);
-        //delay(250);
-        nrf_delay_ms(250);
-        }   
-        pressure=(((maxvolt)-(0.1*Vsupply))/((0.8*Vsupply)/(pressureMax-pressureMin)))+pressureMin;
-        //MAP=5;
-        MAP=(((-1*(14.7-pressure*-1))*51.7)-(3.16/maxvolt));
-        //  digitalWrite(3,0);
-        nrf_gpio_pin_clear(LED_1);
-        //nrf_gpio_pin_write(NRF_GPIO_PIN_MAP(0,13),0);
-        MAP*=-1;
-        Sys=MAP*1.1;
-        Dia=MAP*0.8;
-        for (i = 0; i < 1; i++)
-        {
-            NRF_LOG_INFO("Mean Arterial Pressure=%d  ", MAP);
-            NRF_LOG_INFO("Systolic=%d  ", Sys);
-            NRF_LOG_INFO("Diastolic=%d  \n", Dia);
+        //nrf_delay_ms(250);
+       // delay(250);
+       // 
+        } */
+        if(counter == 40){
+         isFull = true;
+         nrf_gpio_pin_write(RELAY,0);
+         }
         }
-        m_adc_evt_counter++;
+
+        
+
+       // nrf_gpio_pin_set(LED_1);
+        //nrf_gpio_pin_write(NRF_GPIO_PIN_MAP(0,13),1);
+        //NRF_LOG_INFO("ADC event number: %d", (int)m_adc_evt_counter);
+      
+       // pressure=(((maxvolt)-(0.1*Vsupply))/((0.8*Vsupply)/(pressureMax-pressureMin)))+pressureMin;
+        //MAP=5;
+        //MAP=(((-1*(14.7-pressure*-1))*51.7)-(3.16/maxvolt));
+        //  digitalWrite(3,0);
+       // nrf_gpio_pin_clear(LED_1);
+        //nrf_gpio_pin_write(NRF_GPIO_PIN_MAP(0,13),0);
+       // MAP*=-1;
+       // Sys=MAP*1.1;
+      //  Dia=MAP*0.8;
+       // for (i = 0; i < 1; i++)
+       // {
+       //     NRF_LOG_INFO("Mean Arterial Pressure=%d  ", MAP);
+      //      NRF_LOG_INFO("Systolic=%d  ", Sys);
+      //      NRF_LOG_INFO("Diastolic=%d  \n", Dia);
+      //  }
+     //   m_adc_evt_counter++;
     }
 }
 
@@ -205,6 +233,8 @@ int main(void)
     APP_ERROR_CHECK(err_code);
 
     NRF_LOG_DEFAULT_BACKENDS_INIT();
+    nrf_gpio_cfg_output(RELAY);
+
 
     ret_code_t ret_code = nrf_pwr_mgmt_init();
     APP_ERROR_CHECK(ret_code);
