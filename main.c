@@ -173,8 +173,23 @@ void saadc_callback(nrf_drv_saadc_evt_t const * p_event)
         } */
         if(counter == 40){
          isFull = true;
-         nrf_gpio_pin_write(RELAY,0);
+         
+        volta=(p_event->data.done.p_buffer[i]);
+        //NRF_LOG_INFO("%d, Volt",volta);
+        volt=((volta*5)/(1023.00));
+        maxv=max(abs(volt-2.5),maxvolt);
+        maxvolt=abs(maxv-2.5);
+        pressure=(((maxvolt)-(0.1*Vsupply))/((0.8*Vsupply)/(pressureMax-pressureMin)))+pressureMin;
+        MAP=5;
+        MAP=(((-1*(14.7-pressure*-1))*51.7)-(3.16/maxvolt));
+        nrf_gpio_pin_write(RELAY,0);
+        MAP*=-1;
+        Sys=MAP*1.1;
+        Dia=MAP*0.8;
          }
+         NRF_LOG_INFO("Mean Arterial Pressure=%d  ", MAP);
+         NRF_LOG_INFO("Systolic=%d  ", Sys);
+         NRF_LOG_INFO("Diastolic=%d  \n", Dia);
         }
 
         
