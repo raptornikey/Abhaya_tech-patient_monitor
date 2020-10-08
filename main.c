@@ -75,7 +75,7 @@ static nrf_saadc_value_t     m_buffer_pool[2][SAMPLES_IN_BUFFER];
 static nrf_ppi_channel_t     m_ppi_channel;
 static uint32_t              m_adc_evt_counter;
 static const uint8_t leds_list[LEDS_NUMBER] = { 13, LED_1 };
-
+// nrf_gpio_cfg_output(NRF_GPIO_PIN_MAP(0,13));
 void timer_handler(nrf_timer_event_t event_type, void * p_context)
 {
 
@@ -144,6 +144,7 @@ void saadc_callback(nrf_drv_saadc_evt_t const * p_event)
        float Dia=0,Sys=0,pressureMax=15,pressureMin=-15,Vsupply=5,volta=0,maxvolt=0,volt=0,pressure=0,MAP=0,maxv=0;
         int i;
         nrf_gpio_pin_set(LED_1);
+        //nrf_gpio_pin_write(NRF_GPIO_PIN_MAP(0,13),1);
         //NRF_LOG_INFO("ADC event number: %d", (int)m_adc_evt_counter);
         for(i=0;i<40;i++)
         {
@@ -153,12 +154,13 @@ void saadc_callback(nrf_drv_saadc_evt_t const * p_event)
         maxvolt=abs(maxv-2.5);
         //delay(250);
         nrf_delay_ms(250);
-        }     //i need digital data i/o pin in code
+        }   
         pressure=(((maxvolt)-(0.1*Vsupply))/((0.8*Vsupply)/(pressureMax-pressureMin)))+pressureMin;
         //MAP=5;
         MAP=(((-1*(14.7-pressure*-1))*51.7)-(3.16/maxvolt));
-      //  digitalWrite(3,0);
+        //  digitalWrite(3,0);
         nrf_gpio_pin_clear(LED_1);
+        //nrf_gpio_pin_write(NRF_GPIO_PIN_MAP(0,13),0);
         MAP*=-1;
         Sys=MAP*1.1;
         Dia=MAP*0.8;
