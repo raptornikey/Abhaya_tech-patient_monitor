@@ -165,7 +165,7 @@ void saadc_callback(nrf_drv_saadc_evt_t const * p_event)
             maxv=max(abs(volt-2.5),maxvolt);
             maxvolt=abs(maxv-2.5);
             pressure=(((maxvolt)-(0.1*Vsupply))/((0.8*Vsupply)/(pressureMax-pressureMin)))+pressureMin;
-            MAP=5;
+           // MAP=5;
             MAP=(((-1*(14.7-pressure*-1))*51.7)-(3.16/maxvolt));
             //NRF_LOG_INFO("%d", counter);
             //NRF_LOG_INFO("%d", p_event->data.done.p_buffer[i]);
