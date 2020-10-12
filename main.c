@@ -171,7 +171,7 @@ void saadc_callback(nrf_drv_saadc_evt_t const * p_event)
             //NRF_LOG_INFO("%d", p_event->data.done.p_buffer[i]);
             MAP*=-1;
             Sys=MAP*1.1;
-            Dia=MAP*0.8
+            Dia=MAP*0.8;
             
             if(counter == 39){
              NRF_LOG_INFO("Mean Arterial Pressure=%d  ", MAP);
